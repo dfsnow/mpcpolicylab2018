@@ -11,4 +11,18 @@ cta_cleaned <- cta$stops_df %>%
     Y = stop_lon,
     X = stop_lat
     )
+
+pace_cleaned <- pace$stops_df %>%
+  select(stop_id, stop_lon, stop_lat) %>%
+  rename(
+    GEOID = stop_id,
+    Y = stop_lon,
+    X = stop_lat
+  )
+
+merged_stops <- bind_rows(cta_cleaned, pace_cleaned)
+
+merged_stops %>%
+  write_csv("otp/locations/17031-dests.csv")
+
   
