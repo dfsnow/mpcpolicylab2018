@@ -3,3 +3,4 @@
 *.obj
 *.osm
 *.zip
+.Rproj.user
