@@ -6,7 +6,7 @@ import os
 
 # Importing the current county and config vars
 geoid = os.environ.get('GEOID')
-working_dir = '/resources/'
+working_dir = os.environ.get('WORKING_DIR')
 location_dir = 'locations/'
 origins_file = working_dir + location_dir + str(geoid) + '-origins.csv'
 destinations_file = working_dir + location_dir + str(geoid) + '-destinations.csv'
@@ -30,8 +30,8 @@ router = otp.getRouter(geoid)
 req = otp.createRequest()
 req.setDateTime(d.year, d.month, d.day, 12, 00, 00)
 req.setMaxTimeSec(7200)                 # set a limit to maximum travel time
-req.setModes('WALK,TRANSIT')            # define transport mode
-req.maxWalkDistance = 5000            # set the maximum distance
+req.setModes('WALK')            # define transport mode
+req.maxWalkDistance = 3000            # set the maximum distance
 
 # CSV containing the columns GEOID, X and Y.
 origins = otp.loadCSVPopulation(origins_file, 'Y', 'X')
@@ -39,7 +39,7 @@ destinations = otp.loadCSVPopulation(destinations_file, 'Y', 'X')
 
 # Create a CSV output
 csv = otp.createCSVOutput()
-csv.setHeader(['origin', 'destination', 'agg_cost'])
+csv.setHeader(['origin', 'destination', 'agg_cost', 'walk_dist'])
 
 # Start Loop
 for origin in origins:
@@ -54,9 +54,10 @@ for origin in origins:
     # Add a new row of result in the CSV output
     for r in result:
         csv.addRow([
-            int(origin.getFloatData('GEOID')),
-            int(r.getIndividual().getFloatData('GEOID')),
-            round(r.getTime() / 60.0, 2)  # time in minutes
+            origin.getStringData('GEOID')),
+            r.getIndividual().getStringData('GEOID')),
+            round(r.getTime() / 60.0, 2),
+            r.getWalkDistance()
         ])
 
 # Save the result

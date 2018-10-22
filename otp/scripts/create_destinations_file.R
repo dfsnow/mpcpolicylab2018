@@ -23,6 +23,6 @@ pace_cleaned <- pace$stops_df %>%
 merged_stops <- bind_rows(cta_cleaned, pace_cleaned)
 
 merged_stops %>%
-  write_csv("otp/locations/17031-dests.csv")
+  write_csv("otp/locations/17031-destinations.csv")
 
   
