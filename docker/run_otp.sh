@@ -1,10 +1,12 @@
 #!/bin/bash
 
-# Create the OTP graph object
-java -jar /otp/otp-$OTP_VERSION-shaded.jar \
-    --cache $WORKING_DIR \
-    --basePath $WORKING_DIR \
-    --build $WORKING_DIR\graphs/$GEOID
+# Create the OTP graph object if none exits
+if [ ! -f $WORKING_DIR\graphs/$GEOID/Graph.obj ]; then
+    java -jar /otp/otp-$OTP_VERSION-shaded.jar \
+        --cache $WORKING_DIR \
+        --basePath $WORKING_DIR \
+        --build $WORKING_DIR\graphs/$GEOID
+fi
 
 # Create the OTP matrix
 java -jar /otp/jython-standalone-$JYTHON_VERSION.jar \

@@ -54,8 +54,8 @@ for origin in origins:
     # Add a new row of result in the CSV output
     for r in result:
         csv.addRow([
-            origin.getStringData('GEOID')),
-            r.getIndividual().getStringData('GEOID')),
+            origin.getStringData('GEOID'),
+            r.getIndividual().getStringData('GEOID'),
             round(r.getTime() / 60.0, 2),
             r.getWalkDistance()
         ])

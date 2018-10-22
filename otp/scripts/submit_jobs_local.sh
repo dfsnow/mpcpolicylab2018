@@ -8,6 +8,6 @@ for x in 17031; do
         -v /home/snow/mpcpolicylab2018/otp/:$WORKING_DIR \
         -e WORKING_DIR=$WORKING_DIR \
         -e GEOID=$x \
-        otp bash
+        otp
 
 done
