@@ -21,7 +21,6 @@ if [ -n "$CHUNKS" ]; then
     tail -n +2 $GEOID-origins.csv > temp.csv
     rows=$(cat temp.csv | wc -l)
     ((chunk_size = ($rows + $CHUNKS - 1) / $CHUNKS))
-    echo $chunk_size
     split -a ${#CHUNKS} --numeric=1 -l $chunk_size -d temp.csv x
     for chunk in $(seq -f "%0${#CHUNKS}g" 1 $CHUNKS); do
         echo "GEOID,Y,X" > $GEOID-origins-$chunk.csv
@@ -29,5 +28,5 @@ if [ -n "$CHUNKS" ]; then
     done
 fi
 
-#rm x*
+rm x*
 rm temp.csv
