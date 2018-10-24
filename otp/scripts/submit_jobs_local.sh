@@ -10,7 +10,7 @@ for x in 17031; do
         -e WORKING_DIR=$WORKING_DIR \
         -e LOCATION_DIR=$LOCATION_DIR \
         -e MAX_THREADS=40 \
-        -e CHUNKS=40 \
+        -e CHUNKS=90 \
         -e GEOID=$x \
         otp
 
