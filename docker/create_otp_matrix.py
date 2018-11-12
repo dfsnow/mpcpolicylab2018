@@ -46,7 +46,7 @@ def create_matrix(chunk):
     req = otp.createRequest()
     req.setDateTime(d.year, d.month, d.day, 12, 00, 00)
     req.setMaxTimeSec(3600)         # set a limit to maximum travel time
-    req.setModes('WALK')            # define transport mode
+    req.setModes('WALK,TRANSIT')            # define transport mode
     #req.setMaxWalkDistance(2000)    # set the maximum distance
 
     # CSV containing the columns GEOID, X and Y.

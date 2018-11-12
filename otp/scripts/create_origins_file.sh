@@ -2,7 +2,7 @@
 
 GEOID=17031
 GEOMETRY='blocks'
-CHUNKS=100
+CHUNKS=200
 
 psql -d network -U snow -c "\COPY (
     SELECT geoid, ST_X(centroid) AS X, ST_Y(centroid) AS Y

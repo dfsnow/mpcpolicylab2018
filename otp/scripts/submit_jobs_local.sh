@@ -9,8 +9,8 @@ for x in 17031; do
         -v /home/snow/mpcpolicylab2018/otp/:$WORKING_DIR \
         -e WORKING_DIR=$WORKING_DIR \
         -e LOCATION_DIR=$LOCATION_DIR \
-        -e MAX_THREADS=30 \
-        -e CHUNKS=100 \
+        -e MAX_THREADS=20 \
+        -e CHUNKS=200 \
         -e GEOID=$x \
         otp
 
