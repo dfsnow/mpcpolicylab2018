@@ -5,4 +5,9 @@
 *.zip
 .Rproj.user
 *.Rproj
+.Rhistory
+*.RData
 data
+shapefiles
+gtfs
+otp/graphs/

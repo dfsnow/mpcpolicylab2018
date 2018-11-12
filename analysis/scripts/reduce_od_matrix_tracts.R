@@ -2,7 +2,7 @@ library(tidyverse)
 library(udunits2)
 
 # Reading in the raw distance matrix
-odm <- read_csv("analysis/data/17031-output.csv") %>% 
+odm <- read_csv("analysis/data/17031_output.csv") %>% 
   mutate(walk_dist = ud.convert(walk_dist, "m", "mi")) 
 
 # Getting the national mean for Chicagoland of time cost and walk distance

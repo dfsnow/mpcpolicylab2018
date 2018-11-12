@@ -47,13 +47,15 @@ mpc_merged <- il_tracts %>%
   left_join(demand, by = "geoid") %>%
   left_join(supply, by = "geoid")
 
+mpc_merged <- mpc_merged %>%
+  rename(index = weighted_index)
 
 ### Creating map helpers and map ###
 mpc_palette <- "viridis"
 mpc_labels <- sprintf(
   "<strong>%s</strong><br/># stops < 3/4 mi: %g<br/>%% pop. 65+: %g<br/>%% amb. diff.: %g",
   mpc_merged$geoid,
-  mpc_merged$count,
+  mpc_merged$index,
   round(mpc_merged$percent_over_65, 2),
   round(mpc_merged$ambulatory_difficulty_percent, 2)
   ) %>%
@@ -71,7 +73,7 @@ mpc_labeloptions <- labelOptions(
 # Supply map helpers
 mpc_map_supply_pal <- colorQuantile(
   palette = mpc_palette,
-  domain = mpc_merged$count,
+  domain = mpc_merged$index,
   n = 5)
 
 # Demand map helpers
@@ -89,7 +91,7 @@ mpc_map <- leaflet() %>%
   addProviderTiles(providers$CartoDB.Positron) %>%
   addPolygons(
     data = st_geometry(mpc_merged),
-    fillColor = mpc_map_supply_pal(mpc_merged$count),
+    fillColor = mpc_map_supply_pal(mpc_merged$index),
     color = "#e2e2e2",
     weight = 0.3,
     smoothFactor = 0.2,
@@ -102,10 +104,10 @@ mpc_map <- leaflet() %>%
   addLegend(
     title = "Quintiles of # of<br>Stops (< 0.75 mi.)",
     pal = mpc_map_supply_pal,
-    values = mpc_merged$count,
+    values = mpc_merged$index,
     position = "topright",
     group = "Supply"
-  ) %>%
+  )
   addPolygons(
     data = st_geometry(mpc_merged),
     fillColor = mpc_map_demand_amb_pal(mpc_merged$ambulatory_difficulty_percent),
