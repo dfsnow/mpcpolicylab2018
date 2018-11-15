@@ -2,12 +2,8 @@ library(tidyverse)
 library(udunits2)
 
 # Reading in the raw distance matrix
-odm <- read_csv("analysis/data/17031_output.csv") %>% 
+odm <- read_csv("analysis/data/17031_output_tracts.csv") %>% 
   mutate(walk_dist = ud.convert(walk_dist, "m", "mi")) 
-
-# Getting the national mean for Chicagoland of time cost and walk distance
-odm_mean_cost <- mean(odm$agg_cost)
-odm_mean_walk <- mean(odm$walk_dist, na.rm = T)
 
 # Aggregating by tract, then getting values with respect to national mean
 odm %>%
@@ -17,7 +13,7 @@ odm %>%
     agg_cost = mean(agg_cost),
     walk_dist = mean(walk_dist, na.rm = T)
     ) %>%
-  write_csv("analysis/data/17031_output_unfiltered.csv")
+  write_csv("analysis/data/17031_output_tracts_unfiltered.csv")
 
 # Same thing, but filtering out any walking longer than 3/4 mile
 odm_filtered <- odm %>% filter(walk_dist < 0.75)
@@ -32,6 +28,6 @@ odm_filtered %>%
     agg_cost = mean(agg_cost),
     walk_dist = mean(walk_dist, na.rm = T)
   ) %>%
-  write_csv("analysis/data/17031_output_filtered.csv")
+  write_csv("analysis/data/17031_output_tracts_filtered.csv")
 
 

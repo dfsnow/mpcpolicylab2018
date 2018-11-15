@@ -1,7 +1,6 @@
 library(tidyverse)
 library(udunits2)
 library(sf)
-library(tidycensus)
 
 ##### ODM and GTFS #####
 # Reading in the raw distance matrix for walking
@@ -13,7 +12,8 @@ odm_walking <- read_csv("analysis/data/17031_output_blocks_walking.csv") %>%
 # Loading both GTFS feeds
 gtfs <- bind_rows(
   read_csv("analysis/data/cta_gtfs_stop_summary.csv") %>% mutate(stop_id = as.character(stop_id)),
-  read_csv("analysis/data/pace_gtfs_stop_summary.csv")
+  read_csv("analysis/data/pace_gtfs_stop_summary.csv"),
+  read_csv("analysis/data/metra_gtfs_stop_summary.csv")
 )
 
 # Merging data about each stop to the OD matrix
@@ -55,29 +55,32 @@ odm_block_scores <- odm_transit %>%
   filter(agg_cost <= 30) %>%
   group_by(origin) %>%
   summarize(connectivity = n()) %>%
-  mutate(connectivity = scales::rescale(connectivity, to = c(0, 1)))
+  mutate(connectivity = scales::rescale(connectivity, to = c(0, 1))) %>%
+  mutate(origin = as.character(origin))
 
 # Merge tract pop and connectivity, then aggregate to tract level 
 odm_tract_agg <- odm_block_agg %>%
   left_join(
-    read_csv("analysis/data/block_populations.csv") %>%
-      rename(origin = geoid, block_pop = pop) %>%
+    read_csv("analysis/data/chi_block_data.csv") %>%
+      rename(origin = geoid) %>%
       mutate(origin = str_pad(origin, 15, "left", "0")
       ),
     by = "origin"
   ) %>%
   mutate(block_pop = replace_na(block_pop, 0)) %>%
   left_join(odm_block_scores, by = "origin") %>%
-  mutate(
-    index = count + walk_dist + stop_freq + stop_coverage + connectivity
-  ) %>%
   group_by(tract_id) %>%
   summarize(
-    weighted_index = weighted.mean(index, block_pop)
-  ) %>%
+    count = weighted.mean(count, block_pop),
+    walk_dist = weighted.mean(walk_dist, block_pop),
+    stop_freq = weighted.mean(stop_freq, block_pop),
+    stop_coverage = weighted.mean(stop_coverage, block_pop),
+    connectivity = weighted.mean(connectivity, block_pop)
+    ) %>%
   mutate(
-    weighted_index = replace(weighted_index, is.nan(weighted_index), 0)
-  ) %>%
+    index = count + walk_dist + stop_freq + stop_coverage + connectivity,
+    index = replace(index, is.nan(index), 0)
+    ) %>%
   rename(origin = tract_id) %>%
-  write_csv("analysis/data/17031_output_index.csv")
+  write_csv("analysis/data/17031_output_blocks_index.csv")
 
