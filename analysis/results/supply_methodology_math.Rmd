@@ -7,11 +7,14 @@ output: pdf_document
 
 ### Notation key:
 
-$i$ an origin Census block (2010 blocks).
-$j$ a transit stop on PACE, CTA, or Metra.
-$d_{ij}$ the walking distance in miles between $i$ and $j$.
-$t_{ij}$ the total transit time in minutes (walking and/or riding) between $i$ and $j$.
-$A_i$ the accessibility indicator of of stop $j$, equal to:
+* $i$ an origin Census block (2010 blocks).
+* $j$ a transit stop on PACE, CTA, or Metra.
+* $k$ a line/route which stops at $j$.
+* $d_{ij}$ the walking distance in miles between $i$ and $j$.
+* $t_{ij}$ the total transit time in minutes (walking and/or riding) between $i$ and $j$.
+* $f_{jk}$ the frequency of stops (total stops per week) at stop $j$ for line $k$.
+* $s_{jk}$ the percentage of a week covered at stop $j$ by line $k$.
+* $A_j$ the accessibility indicator of of stop $j$, equal to:
 
 $$A_j =
     \begin{cases}
@@ -20,22 +23,45 @@ $$A_j =
     \end{cases}
 $$
 
----
+
 
 ## Count
+
+Count = Sum total of the number of public transit stops (independent of the mode, conditional on accessibility) within ¾ of a mile, network based walking distance from the centroid of a block
 
 $$Count_i = \sum_{j\in\{d_{ij} \leq0.75\}} A_j$$
 
 ## Connectivity
 
-$$Connectivity_i = \sum_{j\in\{{t_{ij} \leq60\}}} A_j-Count_i$$
+Connectivity = Sum total of accessible public transit stops that can be reached in 60 minutes, using any mode of transportation (bus, L, metra) after a ¾ mile network based walk to access the system at an accessible stop from the centroid of a block, excluding any stops that could’ve been reached by a ¾ mile network based walk from the centroid of a block.
 
+$$Connectivity_i = \Big(\sum_{j\in\{{t_{ij} \leq60\}}} A_j\Big)-Count_i$$
+
+
+## Walking Distance
+
+Walk Distance = Mean network walking distance to all stops within ¾ of a mile, network walking distance from the centroid of a block
+
+$$Walking Distance_i = \sum_{j\in\{d_{ij} \leq0.75\}} E[d_{ij}A_j]$$
 
 ## Frequency
 
-$$Frequency_i = \sum_{j\in\{d_{ij} \leq0.75\}} E[]$$
-
 Frequency = Of the available stops determined by the count, the mean number of times per week all those stops are serviced (directional bus stops are considered independent of each other and not joint) (L & Metra stops are considered joint stops)
 
+$$Frequency_i = \sum_{j\in\{d_{ij} \leq0.75\}} E\Big[\sum_{k\in{j}} f_{jk}A_j\Big]$$
 
-# Paratransit
+
+
+## Service Span
+
+Service Span = Of the available stops determined by the count, the mean percentage of the week for which service is available at each stop. If one stop has multiple lines accessing it, then that stop’s value is the mean of the lines servicing that stop.
+
+$$ServiceSpan_i = \sum_{j\in\{d_{ij} \leq0.75\}} E\Big[\sum_{k\in{j}} s_{jk}A_j\Big]$$
+
+# Tract Aggregation
+
+Block values are aggregated to the Census tract level using a population-weighted mean. 
+
+$$V_t = \sum_{i\in{t}} v_ip_i$$
+
+Where $t$ is a Census tract, $V_t$ is the aggregate value, $v_i$ is the value at block $i$, and $p_i$ is the population-weight of the block.
