@@ -51,7 +51,11 @@ supply <- read_csv("analysis/data/17031_output_blocks_index.csv") %>%
   select(-origin)
 
 mpc_merged <- mpc_tracts %>%
-  left_join(supply, by = "geoid") 
+  left_join(supply, by = "geoid") %>%
+  mutate_at(
+    vars(contains("index")),
+    funs(replace(., . == 0, NA))
+  )
 
 ### Creating map helpers and map ###
 mpc_palette <- "viridis"
@@ -59,23 +63,31 @@ mpc_palette <- "viridis"
 mpc_labels <- sprintf(
   paste0(
     "<strong>%s</strong><br/>",
-    "Index: %g<br/>",
-    "<strong>Fixed Line Values</strong><br/>",
+    "<strong>Full Index: %g</strong><br/>",
+    "<font color=\"#4c4c4c\"><strong>Fixed Line: %g</strong></font><br/>",
     "Stop Count: %g<br/>",
-    "Stop Frequency: %g<br/>",
-    "Stop Coverage: %g<br/>",
+    "Frequency: %g<br/>",
+    "Service Span: %g<br/>",
     "Walk Distance: %g<br/>",
     "Connectivity: %g<br/>",
-    "<strong>Paratransit Values</strong><br/>",
-    "Paratransit Eligible: %g<br/>"),
+    "<font color=\"#4c4c4c\"><strong>Paratransit: %g</strong></font><br/>",
+    "Paratransit Eligible: %g<br/>",
+    "DaR Eligibility: %g<br/>",
+    "DaR Service Span: %g<br/>",
+    "DaR Adv. Flexibility: %g"),
   mpc_merged$geoid,
   round(mpc_merged$all_index, 3),
+  round(mpc_merged$f_index, 3),
   round(mpc_merged$f_count, 3),
   round(mpc_merged$f_stop_freq, 3),
   round(mpc_merged$f_stop_coverage, 3),
   round(mpc_merged$f_walk_dist, 3),
   round(mpc_merged$f_connectivity, 3),
-  round(mpc_merged$p_elig, 3)
+  round(mpc_merged$p_index, 3),
+  round(mpc_merged$p_elig, 3),
+  round(mpc_merged$d_eligibility, 3),
+  round(mpc_merged$d_total_service_hours_pct_coverage, 3),
+  round(mpc_merged$d_advance_flexibility, 3)
   ) %>%
   lapply(htmltools::HTML)
 
@@ -165,7 +177,7 @@ mpc_map <- leaflet() %>%
     group = "Paratransit"
   ) %>%
   addLegend(
-    title = "Paratransit <br/>Eligible",
+    title = "Paratransit<br/>Index",
     pal = mpc_map_supply_pal_para,
     values = mpc_merged$p_index,
     position = "topright",
@@ -178,6 +190,5 @@ mpc_map <- leaflet() %>%
     overlayGroups = c("Both", "Fixed Line", "Paratransit"),
     position = "bottomright"
   ) %>%
-  hideGroup(c("Fixed Line", "Paratransit")) 
-
-saveWidget(mpc_map, "mpc_map_20181121.html")
+  hideGroup(c("Fixed Line", "Paratransit")) %>% 
+  saveWidget("mpc_map_20181125.html")

@@ -5,9 +5,10 @@ library(sf)
 ##### Fixed Line (count, freq, coverage, dist) #####
 # Reading in the raw distance matrix for walking
 odm_walking <- read_csv("analysis/data/17031_output_blocks_walking.csv") %>% 
-  mutate(walk_dist = ud.convert(walk_dist, "m", "mi"),
-         origin = str_pad(origin, 15, "left", "0")
-         )
+  mutate(
+    walk_dist = ud.convert(walk_dist, "m", "mi"),
+    origin = str_pad(origin, 15, "left", "0")
+    )
 
 # Loading all GTFS feed stop data
 gtfs <- bind_rows(
@@ -20,46 +21,49 @@ gtfs <- bind_rows(
 odm_merged <- odm_walking %>%
   filter(walk_dist <= 0.75) %>%
   left_join(gtfs, by = c("destination" = "stop_id")) %>%
-  mutate(accessible = wheelchair_boarding != 2)
+  mutate(accessible = replace_na(wheelchair_boarding != 2, TRUE))
 
 # Aggregating stop information by each origin (block)
 odm_block_agg <- odm_merged %>%
-  mutate_at(
-    vars(agg_cost, walk_dist, stop_week_frequency, stop_week_pct_coverage),
-    funs(scales::rescale(., to = c(0, 1)))
-    ) %>%
   group_by(origin) %>%
   summarize(
-    count = sum(accessible, na.rm = T),
-    walk_time = mean(1 - agg_cost * accessible, na.rm = T),
-    walk_dist = mean(1 - walk_dist * accessible, na.rm = T),
+    count_raw = sum(accessible, na.rm = T),
+    walk_time = mean(agg_cost * accessible, na.rm = T),
+    walk_dist = mean(walk_dist * accessible, na.rm = T),
     stop_freq = mean(stop_week_frequency * accessible, na.rm = T),
     stop_coverage = mean(stop_week_pct_coverage * accessible, na.rm = T)
   ) %>%
   mutate_at(
-    vars(walk_time:stop_coverage),
-    funs(replace(., is.nan(.), 0))
+    vars(walk_time, walk_dist, stop_freq, stop_coverage),
+    funs(scales::rescale(., to = c(0, 1)))
   ) %>%
   mutate(
-    count = scales::rescale(count, to = c(0, 1)),
-    tract_id = str_sub(origin, 1, 11)
-  )
+    count = scales::rescale(count_raw, to = c(0, 1))
+  ) %>%
+  mutate_at(
+    vars(walk_time:count),
+    funs(replace(., is.nan(.), 0))
+  ) 
 
-rm(list = c("gtfs", "odm_walking"))
+#rm(list = c("gtfs", "odm_walking"))
   
 
 
 ##### Fixed Line Transit Scores (connectivity) #####
 # Reading in the matrix for transit + walking
-odm_transit <- read_csv("analysis/data/17031_output_blocks_transit.csv")
+odm_transit <- read_csv("analysis/data/17031_output_blocks_transit.csv") %>%
+  mutate(
+    walk_dist = ud.convert(walk_dist, "m", "mi"),
+    origin = str_pad(origin, 15, "left", "0")
+  )
 
-# Get count of all stops within 30 min and rescale
+# Get count of all stops within 60 min and rescale
 odm_block_scores <- odm_transit %>%
-  filter(agg_cost <= 60) %>%
+  filter(agg_cost <= 60 & walk_dist <= 0.75) %>%
+  left_join(gtfs, by = c("destination" = "stop_id")) %>%
+  mutate(accessible = replace_na(wheelchair_boarding != 2, TRUE)) %>%
   group_by(origin) %>%
-  summarize(connectivity = n()) %>%
-  mutate(connectivity = scales::rescale(connectivity, to = c(0, 1))) %>%
-  mutate(origin = as.character(origin))
+  summarize(connected = sum(accessible, na.rm = T))
 
 # Merge block population and connectivity scores
 odm_block_agg <- odm_block_agg %>%
@@ -72,6 +76,10 @@ odm_block_agg <- odm_block_agg %>%
   ) %>%
   left_join(odm_block_scores, by = "origin") %>%
   mutate_all(funs(replace_na(., 0))) %>%
+  mutate(
+    connectivity = connected - count_raw,
+    connectivity = scales::rescale(connectivity, to = c(0, 1))
+  ) %>%
   st_as_sf(coords = c("lon", "lat"), crs = 4326)
 
 rm(list = c("odm_transit"))
@@ -87,9 +95,6 @@ paratransit <- st_read("analysis/shapefiles/fixed_lines_buffered_merged.shp") %>
 odm_block_agg <- odm_block_agg %>%
   mutate(p_elig = st_within(odm_block_agg, paratransit) %>% lengths > 0)
 
-#odm_block_agg %>% write_csv("analysis/data/block_agg_temp.csv")
-#odm_block_agg <- read_csv("analysis/data/block_agg_temp.csv") %>%
-#mutate(geometry = st_geometry(geometry))
 
 
 
@@ -118,10 +123,7 @@ odm_block_agg_dar$geometry <- NULL
 
 # Get the count + mean eligibility, advanced call in, and pct_coverage per block
 odm_block_agg <- odm_block_agg_dar %>%
-  group_by(origin) %>%
-  summarize(d_count = n()) %>%
-  left_join(odm_block_agg_dar, by = "origin") %>%
-  mutate(tract_id = as.numeric(tract_id)) %>%
+  mutate(tract_id = as.numeric(str_sub(origin, 1, 11))) %>%
   group_by(origin) %>%
   summarize_all(funs(mean(.))) %>%
   mutate(tract_id = str_pad(tract_id, 11, "left", "0")) %>%
@@ -134,7 +136,7 @@ odm_block_agg <- odm_block_agg_dar %>%
 odm_tract_agg <- odm_block_agg %>%
   group_by(tract_id) %>%
   summarize_at(
-    vars(-block_pop, -tract_pop, -origin),
+    vars(-count_raw, -connected, -block_pop, -tract_pop, -origin),
     funs(weighted.mean(., block_pop)) 
   ) %>%
   mutate_all(funs(replace(., is.na(.), 0))) %>%
@@ -144,7 +146,7 @@ odm_tract_agg <- odm_block_agg %>%
   ) %>%
   mutate(
     f_index = f_count + f_walk_dist + f_stop_freq + f_stop_coverage + f_connectivity,
-    p_index = p_elig + d_count + d_eligibility + d_advance_flexibility + d_total_service_hours_pct_coverage,
+    p_index = p_elig + d_eligibility + d_advance_flexibility + d_total_service_hours_pct_coverage,
     all_index = f_index + p_index
     ) %>%
   filter(!is.nan(all_index)) %>%

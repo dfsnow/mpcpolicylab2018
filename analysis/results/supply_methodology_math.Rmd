@@ -1,0 +1,41 @@
+---
+title: "Supply Methodology Math"
+output: pdf_document
+---
+
+# Fixed Line Calculations
+
+### Notation key:
+
+$i$ an origin Census block (2010 blocks).
+$j$ a transit stop on PACE, CTA, or Metra.
+$d_{ij}$ the walking distance in miles between $i$ and $j$.
+$t_{ij}$ the total transit time in minutes (walking and/or riding) between $i$ and $j$.
+$A_i$ the accessibility indicator of of stop $j$, equal to:
+
+$$A_j =
+    \begin{cases}
+      1, & \text{if}\ j \text{ is wheelchair accessible or has no info} \\
+      0, & \text{otherwise}
+    \end{cases}
+$$
+
+---
+
+## Count
+
+$$Count_i = \sum_{j\in\{d_{ij} \leq0.75\}} A_j$$
+
+## Connectivity
+
+$$Connectivity_i = \sum_{j\in\{{t_{ij} \leq60\}}} A_j-Count_i$$
+
+
+## Frequency
+
+$$Frequency_i = \sum_{j\in\{d_{ij} \leq0.75\}} E[]$$
+
+Frequency = Of the available stops determined by the count, the mean number of times per week all those stops are serviced (directional bus stops are considered independent of each other and not joint) (L & Metra stops are considered joint stops)
+
+
+# Paratransit
