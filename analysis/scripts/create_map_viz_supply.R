@@ -71,8 +71,7 @@ mpc_labels <- sprintf(
     "Walk Distance: %g<br/>",
     "Connectivity: %g<br/>",
     "<font color=\"#4c4c4c\"><strong>Paratransit: %g</strong></font><br/>",
-    "Paratransit Eligible: %g<br/>",
-    "DaR Eligibility: %g<br/>",
+    "Paratransit Available: %g<br/>",
     "DaR Service Span: %g<br/>",
     "DaR Adv. Flexibility: %g"),
   mpc_merged$geoid,
@@ -85,7 +84,6 @@ mpc_labels <- sprintf(
   round(mpc_merged$f_connectivity, 3),
   round(mpc_merged$p_index, 3),
   round(mpc_merged$p_elig, 3),
-  round(mpc_merged$d_eligibility, 3),
   round(mpc_merged$d_total_service_hours_pct_coverage, 3),
   round(mpc_merged$d_advance_flexibility, 3)
   ) %>%
@@ -191,4 +189,4 @@ mpc_map <- leaflet() %>%
     position = "bottomright"
   ) %>%
   hideGroup(c("Fixed Line", "Paratransit")) %>% 
-  saveWidget("mpc_map_20181125.html")
+  saveWidget("mpc_map_supply_20181202.html")
