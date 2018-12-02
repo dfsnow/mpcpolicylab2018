@@ -117,4 +117,4 @@ mpc_map <- leaflet() %>%
 mpc_merged %>%
   st_set_geometry(NULL) %>% 
   select(geoid:combined_index_quantile) %>%
-  write_csv("analysis/data/mpc_combined_index.csv")
+  write_csv("analysis/results/mpc_combined_index.csv")
