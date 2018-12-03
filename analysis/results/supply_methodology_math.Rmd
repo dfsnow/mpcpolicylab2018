@@ -14,6 +14,7 @@ output: pdf_document
 * $t_{ij}$ the total transit time in minutes (walking and/or riding) between $i$ and $j$.
 * $f_{jk}$ the frequency of stops (total stops per week) at stop $j$ for line $k$.
 * $s_{jk}$ the percentage of a week covered at stop $j$ by line $k$.
+* $W_j$ the walkability score of stop $j$, which is a value $W_j\in[0.2, 0.4, 0.6, 0.8, 1.0]$
 * $A_j$ the accessibility indicator of of stop $j$, equal to:
 
 $$A_j =
@@ -27,15 +28,15 @@ $$
 
 ## Count
 
-Count = Sum total of the number of public transit stops (independent of the mode, conditional on accessibility) within ¾ of a mile, network based walking distance from the centroid of a block
+Count = Sum total of the number of public transit stops (independent of the mode, conditional on accessibility) within ¾ of a mile, network based walking distance from the centroid of a block. 
 
-$$Count_i = \sum_{j\in\{d_{ij} \leq0.75\}} A_j$$
+$$Count_i = \sum_{j\in\{d_{ij} \leq0.75\}} A_jW_j$$
 
 ## Connectivity
 
 Connectivity = Sum total of accessible public transit stops that can be reached in 60 minutes, using any mode of transportation (bus, L, metra) after a ¾ mile network based walk to access the system at an accessible stop from the centroid of a block, excluding any stops that could’ve been reached by a ¾ mile network based walk from the centroid of a block.
 
-$$Connectivity_i = \Big(\sum_{j\in\{{t_{ij} \leq60\}}} A_j\Big)-Count_i$$
+$$Connectivity_i = \Big(\sum_{j\in\{{t_{ij} \leq60\}}} A_j\Big)-\Big(\sum_{j\in\{d_{ij} \leq0.75\}} A_j\Big)$$
 
 
 ## Walking Distance
@@ -48,7 +49,7 @@ $$Walking Distance_i = \sum_{j\in\{d_{ij} \leq0.75\}} E[d_{ij}A_j]$$
 
 Frequency = Of the available stops determined by the count, the mean number of times per week all those stops are serviced (directional bus stops are considered independent of each other and not joint) (L & Metra stops are considered joint stops)
 
-$$Frequency_i = \sum_{j\in\{d_{ij} \leq0.75\}} E\Big[\sum_{k\in{j}} f_{jk}A_j\Big]$$
+$$Frequency_i = \sum_{j\in\{d_{ij} \leq0.75\}} E\Big[\sum_{k\in{j}} f_{jk}A_jW_j\Big]$$
 
 
 
@@ -56,12 +57,20 @@ $$Frequency_i = \sum_{j\in\{d_{ij} \leq0.75\}} E\Big[\sum_{k\in{j}} f_{jk}A_j\Bi
 
 Service Span = Of the available stops determined by the count, the mean percentage of the week for which service is available at each stop. If one stop has multiple lines accessing it, then that stop’s value is the mean of the lines servicing that stop.
 
-$$ServiceSpan_i = \sum_{j\in\{d_{ij} \leq0.75\}} E\Big[\sum_{k\in{j}} s_{jk}A_j\Big]$$
+$$ServiceSpan_i = \sum_{j\in\{d_{ij} \leq0.75\}} E\Big[\sum_{k\in{j}} s_{jk}A_jW_j\Big]$$
 
 # Tract Aggregation
 
 Block values are aggregated to the Census tract level using a population-weighted mean. 
 
-$$V_t = \sum_{i\in{t}} v_ip_i$$
+$$V_t = \sum_{i\in{t}} E\big[v_ip_i\big]$$
 
-Where $t$ is a Census tract, $V_t$ is the aggregate value, $v_i$ is the value at block $i$, and $p_i$ is the population-weight of the block.
+Where $t$ is a Census tract, $i$ is a Census block, $V_t$ is the aggregate tract-level value, $v_i$ is the value at block $i$, and $p_i$ is the population-weight of the block.
+
+# Gap Index Calculation
+
+The gap index is calculated at the tract level by subtracting the decile of the demand index from the decile of the supply index. 
+
+$$Gap_t =D(Supply)_t - D(Demand)_t$$
+
+Where $t$ is a Census tract, $D(Supply)_t$ is the decile of supply at tract $t$, and $D(Demand)_t$ is the decile of demand at tract $t$. 
