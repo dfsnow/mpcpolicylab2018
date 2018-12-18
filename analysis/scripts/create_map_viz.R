@@ -43,11 +43,13 @@ mpc_merged <- mpc_tracts %>%
   left_join(demand, by = "geoid") %>%
   left_join(supply, by = "geoid") %>%
   mutate_at(
-    vars(demand_index, supply_index),
+    vars(contains("_index")),
     funs(quantile = ntile(., 10))
     ) %>%
   mutate(
-    combined_index_quantile = supply_index_quantile - demand_index_quantile
+    combined_index_quantile = supply_index_quantile - demand_index_quantile,
+    combined_fixed_only = f_index_quantile - demand_index_quantile,
+    combined_para_only = p_index_quantile - demand_index_quantile
   )
   
 
@@ -61,12 +63,17 @@ mpc_labels <- sprintf(
     "<strong>%s</strong><br/>",
     "<strong>Full Index: %g</strong><br/>",
     "<font color=\"#4c4c4c\"><strong>Supply Index: %g</strong></font><br/>",
-    "<font color=\"#4c4c4c\"><strong>Demand Index: %g</strong></font><br/>"
+    "<font color=\"#4c4c4c\"><strong>Demand Index: %g</strong></font><br/>",
+    "<br/>",
+    "<font color=\"#4c4c4c\"><strong>Fixed Index: %g</strong></font><br/>",
+    "<font color=\"#4c4c4c\"><strong>Para Index: %g</strong></font><br/>"
   ),
   mpc_merged$geoid,
   mpc_merged$combined_index_quantile,
   mpc_merged$supply_index_quantile,
-  mpc_merged$demand_index_quantile
+  mpc_merged$demand_index_quantile,
+  mpc_merged$combined_fixed_only,
+  mpc_merged$combined_para_only
   ) %>%
   lapply(htmltools::HTML)
 
@@ -84,7 +91,7 @@ mpc_labeloptions <- labelOptions(
 # Supply map helpers
 mpc_map_supply_pal_all <- colorNumeric(
   palette = mpc_palette,
-  domain = c(mpc_merged$combined_index_quantile, -8))
+  domain = -10:10)
 
 # Create leaflet maps
 mpc_map <- leaflet() %>%
@@ -95,7 +102,7 @@ mpc_map <- leaflet() %>%
     color = "#e2e2e2",
     weight = 0.3,
     smoothFactor = 0.2,
-    fillOpacity = 0.65,
+    fillOpacity = 0.85,
     label = mpc_labels,
     labelOptions = mpc_labeloptions,
     highlightOptions = mpc_highlights,
@@ -111,7 +118,56 @@ mpc_map <- leaflet() %>%
       n = length(cuts)
       paste0(round(cuts[-n], 2), sep = " to ", round(cuts[-1], 2))}
   ) %>%
-  saveWidget("mpc_map_combined_20181202.html")
+  addPolygons(
+    data = st_geometry(mpc_merged),
+    fillColor = mpc_map_supply_pal_all(mpc_merged$combined_fixed_only),
+    color = "#e2e2e2",
+    weight = 0.3,
+    smoothFactor = 0.2,
+    fillOpacity = 0.85,
+    label = mpc_labels,
+    labelOptions = mpc_labeloptions,
+    highlightOptions = mpc_highlights,
+    group = "Fixed Line"
+  ) %>%
+  addLegend(
+    title = "Fixed Line Index",
+    pal = mpc_map_supply_pal_all,
+    values = mpc_merged$combined_fixed_only,
+    position = "topright",
+    group = "Both",
+    labFormat = function(type, cuts, p) {
+      n = length(cuts)
+      paste0(round(cuts[-n], 2), sep = " to ", round(cuts[-1], 2))}
+  ) %>%
+  addPolygons(
+    data = st_geometry(mpc_merged),
+    fillColor = mpc_map_supply_pal_all(mpc_merged$combined_para_only),
+    color = "#e2e2e2",
+    weight = 0.3,
+    smoothFactor = 0.2,
+    fillOpacity = 0.85,
+    label = mpc_labels,
+    labelOptions = mpc_labeloptions,
+    highlightOptions = mpc_highlights,
+    group = "Paratransit"
+  ) %>%
+  addLegend(
+    title = "Paratransit Index",
+    pal = mpc_map_supply_pal_all,
+    values = mpc_merged$combined_para_only,
+    position = "topright",
+    group = "Paratransit",
+    labFormat = function(type, cuts, p) {
+      n = length(cuts)
+      paste0(round(cuts[-n], 2), sep = " to ", round(cuts[-1], 2))}
+  ) %>%
+  addLayersControl(
+    overlayGroups = c("Both", "Fixed Line", "Paratransit"),
+    position = "bottomright"
+  ) %>%
+  hideGroup(c("Fixed Line", "Paratransit")) %>% 
+  saveWidget("mpc_map_combined_20181218.html")
 
 # Save resulting data
 mpc_merged %>%

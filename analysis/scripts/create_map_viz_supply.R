@@ -189,4 +189,4 @@ mpc_map <- leaflet() %>%
     position = "bottomright"
   ) %>%
   hideGroup(c("Fixed Line", "Paratransit")) %>% 
-  saveWidget("mpc_map_supply_20181202.html")
+  saveWidget("mpc_map_supply_20181218.html")
