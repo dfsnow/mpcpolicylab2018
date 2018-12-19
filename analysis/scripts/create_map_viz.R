@@ -135,7 +135,7 @@ mpc_map <- leaflet() %>%
     pal = mpc_map_supply_pal_all,
     values = mpc_merged$combined_fixed_only,
     position = "topright",
-    group = "Both",
+    group = "Fixed Line",
     labFormat = function(type, cuts, p) {
       n = length(cuts)
       paste0(round(cuts[-n], 2), sep = " to ", round(cuts[-1], 2))}
